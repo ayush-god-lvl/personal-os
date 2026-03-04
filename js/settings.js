@@ -51,6 +51,8 @@ const SettingsPage = {
                     <button class="btn btn-secondary" onclick="SettingsPage.exportCSV('timeLogs')">📊 Export Time CSV</button>
                     <button class="btn btn-secondary" onclick="SettingsPage.exportCSV('skillLogs')">📊 Export Skills CSV</button>
                     <button class="btn btn-danger" onclick="SettingsPage.clearAll()">🗑 Clear All Data</button>
+                    <button class="btn btn-secondary" onclick="Tour.start()">🎯 Start Tour</button>
+                    <button class="btn btn-secondary" onclick="Tour.reset()">↻ Reset Tour</button>
                 </div>
                 <input type="file" id="importFile" accept=".json" style="display:none;" onchange="SettingsPage.handleImport(event)">
             </div>

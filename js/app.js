@@ -23,12 +23,18 @@ const App = {
         Shortcuts.init();
         this.setupRouter();
 
-        // Dismiss splash after animation
+        // Dismiss splash after animation, then launch tour
         setTimeout(() => {
             const splash = document.getElementById('splash');
             if (splash) {
                 splash.classList.add('hide');
-                setTimeout(() => splash.remove(), 600);
+                setTimeout(() => {
+                    splash.remove();
+                    // Launch tour for first-time users
+                    if (Tour.shouldShow()) {
+                        setTimeout(() => Tour.start(), 400);
+                    }
+                }, 600);
             }
         }, 2600);
 
