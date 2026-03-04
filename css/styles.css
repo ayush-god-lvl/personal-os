@@ -167,6 +167,21 @@ body {
     object-fit: cover;
 }
 
+.user-avatar-fallback {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    flex-shrink: 0;
+    background: var(--accent-glow);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+}
+
 .user-info {
     flex: 1;
     min-width: 0;

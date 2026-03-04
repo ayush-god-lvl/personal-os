@@ -103,7 +103,7 @@ const SettingsPage = {
         settings.overloadLimit = parseInt(document.getElementById('setOverload').value) || 14;
         settings.burnoutThreshold = parseInt(document.getElementById('setBurnout').value) || 40;
         Data.saveSettings(settings);
-        alert('Settings saved.');
+        Toast.show('Settings saved.', 'success');
     },
 
     saveWeights() {
@@ -111,11 +111,11 @@ const SettingsPage = {
         const d = parseInt(document.getElementById('wDeep').value) || 0;
         const t = parseInt(document.getElementById('wTrain').value) || 0;
         const n = parseInt(document.getElementById('wNoDist').value) || 0;
-        if (h + d + t + n !== 100) return alert('Weights must total 100%.');
+        if (h + d + t + n !== 100) return Toast.show('Weights must total 100%.', 'warning');
         const settings = Data.getSettings();
         settings.scoringWeights = { habits: h, deepWork: d, training: t, noDistraction: n };
         Data.saveSettings(settings);
-        alert('Weights saved.');
+        Toast.show('Weights saved.', 'success');
     },
 
     exportJSON() {
@@ -140,17 +140,17 @@ const SettingsPage = {
                 const data = JSON.parse(e.target.result);
                 if (confirm('This will overwrite current data. Continue?')) {
                     Data.importAll(data);
-                    alert('Data restored successfully.');
+                    Toast.show('Data restored successfully.', 'success');
                     this.render();
                 }
-            } catch { alert('Invalid JSON file.'); }
+            } catch { Toast.show('Invalid JSON file.', 'error'); }
         };
         reader.readAsText(file);
     },
 
     exportCSV(collection) {
         const csv = Data.exportCSV(collection);
-        if (!csv) return alert('No data to export.');
+        if (!csv) return Toast.show('No data to export.', 'warning');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url;
