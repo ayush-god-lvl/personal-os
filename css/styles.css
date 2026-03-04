@@ -86,12 +86,12 @@ body {
 }
 
 .logo-icon {
-    font-size: 20px;
+    font-size: 26px;
     color: var(--accent);
 }
 
 .logo-text {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
     letter-spacing: 2px;
     color: var(--text-primary);
@@ -146,6 +146,115 @@ body {
 .sidebar-footer {
     padding: 16px 20px;
     border-top: 1px solid var(--border);
+}
+
+/* --- User Profile (Sidebar) --- */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-tertiary);
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-email {
+    font-size: 10px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-signout {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.user-signout:hover {
+    color: var(--red);
+    background: var(--red-dim);
+}
+
+/* --- Google Sign-In Button --- */
+.google-signin-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 12px;
+}
+
+.google-signin-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+
+.google-signin-btn svg {
+    flex-shrink: 0;
+}
+
+/* --- Cloud Sync Badge --- */
+.sync-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.sync-status.synced {
+    background: var(--green-dim);
+    color: var(--green);
+}
+
+.sync-status.local {
+    background: var(--yellow-dim);
+    color: var(--yellow);
 }
 
 .system-status {

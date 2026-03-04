@@ -1,8 +1,11 @@
 /* ============================================
-   PERSONAL OS — Data Layer (localStorage)
+   PERSONAL OS — Data Layer (localStorage + Firestore)
    ============================================ */
 
 const Data = {
+    _cloudKeys: ['phases', 'habits', 'academics', 'skillLogs', 'timeLogs', 'settings', 'tasks', 'initialized'],
+    _syncTimer: null,
+
     get(key) {
         try {
             const raw = localStorage.getItem('pos_' + key);
@@ -14,10 +17,116 @@ const Data = {
 
     set(key, value) {
         localStorage.setItem('pos_' + key, JSON.stringify(value));
+        // Debounced cloud sync
+        this._queueCloudSync(key, value);
     },
 
     remove(key) {
         localStorage.removeItem('pos_' + key);
+        this._cloudDelete(key);
+    },
+
+    // --- Cloud Sync (Firestore) ---
+    _queueCloudSync(key, value) {
+        if (!Auth || !Auth.isSignedIn()) return;
+        // Debounce: wait 1s after last write before syncing
+        clearTimeout(this._syncTimer);
+        this._syncTimer = setTimeout(() => {
+            this._cloudSet(key, value);
+        }, 1000);
+    },
+
+    async _cloudSet(key, value) {
+        if (!Auth || !Auth.isSignedIn()) return;
+        try {
+            const uid = Auth.getUID();
+            await FirebaseDB.collection('users').doc(uid).collection('data').doc(key).set({
+                value: JSON.stringify(value),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (err) {
+            console.warn('Cloud sync failed for', key, err);
+        }
+    },
+
+    async _cloudGet(key) {
+        if (!Auth || !Auth.isSignedIn()) return null;
+        try {
+            const uid = Auth.getUID();
+            const doc = await FirebaseDB.collection('users').doc(uid).collection('data').doc(key).get();
+            if (doc.exists) {
+                return JSON.parse(doc.data().value);
+            }
+        } catch (err) {
+            console.warn('Cloud read failed for', key, err);
+        }
+        return null;
+    },
+
+    async _cloudDelete(key) {
+        if (!Auth || !Auth.isSignedIn()) return;
+        try {
+            const uid = Auth.getUID();
+            await FirebaseDB.collection('users').doc(uid).collection('data').doc(key).delete();
+        } catch (err) {
+            console.warn('Cloud delete failed for', key, err);
+        }
+    },
+
+    // Load all data from Firestore → localStorage
+    async loadFromCloud() {
+        if (!Auth || !Auth.isSignedIn()) return;
+        try {
+            const uid = Auth.getUID();
+            const snapshot = await FirebaseDB.collection('users').doc(uid).collection('data').get();
+
+            if (snapshot.empty) {
+                // No cloud data — push local data to cloud (first-time sync)
+                Toast.show('First sync — uploading local data to cloud...', 'info');
+                await this.syncToCloud();
+                return;
+            }
+
+            // Cloud data exists — overwrite local
+            snapshot.forEach(doc => {
+                try {
+                    const value = JSON.parse(doc.data().value);
+                    localStorage.setItem('pos_' + doc.id, JSON.stringify(value));
+                } catch (e) {
+                    console.warn('Failed to parse cloud data for', doc.id, e);
+                }
+            });
+            Toast.show('Data loaded from cloud ☁', 'success');
+        } catch (err) {
+            console.error('Cloud load failed:', err);
+            Toast.show('Cloud sync failed — using local data', 'warning');
+        }
+    },
+
+    // Push all local data → Firestore
+    async syncToCloud() {
+        if (!Auth || !Auth.isSignedIn()) return;
+        try {
+            const uid = Auth.getUID();
+            const batch = FirebaseDB.batch();
+
+            this._cloudKeys.forEach(key => {
+                const value = this.get(key);
+                if (value !== null) {
+                    const ref = FirebaseDB.collection('users').doc(uid).collection('data').doc(key);
+                    batch.set(ref, {
+                        value: JSON.stringify(value),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            });
+
+            await batch.commit();
+            Toast.show('All data synced to cloud ☁', 'success');
+        } catch (err) {
+            console.error('Cloud sync failed:', err);
+            Toast.show('Sync failed: ' + err.message, 'error');
+        }
     },
 
     // --- Collection Helpers ---

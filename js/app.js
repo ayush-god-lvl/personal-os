@@ -19,6 +19,7 @@ const App = {
     init() {
         Data.initDefaults();
         Toast.init();
+        Auth.init();
         Shortcuts.init();
         this.setupRouter();
 
