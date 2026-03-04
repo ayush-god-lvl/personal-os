@@ -16,11 +16,15 @@ const Auth = {
             if (user && !this._initialized) {
                 // First sign-in or page reload with existing session
                 Toast.show(`Welcome, ${user.displayName || 'User'}!`, 'success');
-                await Data.loadFromCloud();
-                App.navigate(App.getCurrentPage());
+                if (!Tour.isActive) {
+                    await Data.loadFromCloud();
+                    App.navigate(App.getCurrentPage());
+                }
             } else if (!user && wasSignedIn) {
                 // User just signed out — re-render to update UI
-                App.navigate(App.getCurrentPage());
+                if (!Tour.isActive) {
+                    App.navigate(App.getCurrentPage());
+                }
             }
 
             this._initialized = true;

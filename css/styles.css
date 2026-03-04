@@ -1359,11 +1359,13 @@ kbd {
     border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
     padding: 24px;
-    width: 380px;
+    width: 420px;
     max-width: calc(100vw - 40px);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.1);
     opacity: 0;
     transition: opacity 0.3s ease, transform 0.3s ease;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 .tour-tooltip.visible {
@@ -1450,30 +1452,19 @@ kbd {
     color: var(--text-secondary);
 }
 
-.tour-dots {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
+.tour-progress {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
     margin-top: 16px;
+    overflow: hidden;
 }
 
-.tour-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--border-light);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.tour-dot.active {
+.tour-progress-fill {
+    height: 100%;
     background: var(--accent);
-    width: 18px;
-    border-radius: 3px;
-}
-
-.tour-dot:hover {
-    background: var(--text-muted);
+    border-radius: 2px;
+    transition: width 0.4s ease;
 }
 
 /* Tour responsive */
@@ -1488,5 +1479,42 @@ kbd {
 
     .tour-spotlight {
         display: none;
+    }
+}
+
+/* Floating Tour Button (FAB) */
+.tour-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    font-size: 20px;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    z-index: 100;
+    transition: all 0.2s ease;
+    animation: fabPulse 3s ease-in-out infinite;
+}
+
+.tour-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 28px rgba(99, 102, 241, 0.6);
+}
+
+@keyframes fabPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 4px 28px rgba(99, 102, 241, 0.6);
     }
 }
