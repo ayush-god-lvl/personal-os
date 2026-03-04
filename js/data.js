@@ -4,7 +4,8 @@
 
 const Data = {
     _cloudKeys: ['phases', 'habits', 'academics', 'skillLogs', 'timeLogs', 'settings', 'tasks', 'initialized'],
-    _syncTimer: null,
+    _syncTimers: {},
+    _isSyncing: false,
 
     get(key) {
         try {
@@ -17,7 +18,7 @@ const Data = {
 
     set(key, value) {
         localStorage.setItem('pos_' + key, JSON.stringify(value));
-        // Debounced cloud sync
+        // Debounced cloud sync (per-key)
         this._queueCloudSync(key, value);
     },
 
@@ -28,16 +29,18 @@ const Data = {
 
     // --- Cloud Sync (Firestore) ---
     _queueCloudSync(key, value) {
-        if (!Auth || !Auth.isSignedIn()) return;
-        // Debounce: wait 1s after last write before syncing
-        clearTimeout(this._syncTimer);
-        this._syncTimer = setTimeout(() => {
+        if (typeof Auth === 'undefined' || !Auth.isSignedIn()) return;
+        if (this._isSyncing) return; // Prevent sync loops during loadFromCloud
+
+        // Per-key debounce: each key gets its own 1.5s timer
+        clearTimeout(this._syncTimers[key]);
+        this._syncTimers[key] = setTimeout(() => {
             this._cloudSet(key, value);
-        }, 1000);
+        }, 1500);
     },
 
     async _cloudSet(key, value) {
-        if (!Auth || !Auth.isSignedIn()) return;
+        if (typeof Auth === 'undefined' || !Auth.isSignedIn()) return;
         try {
             const uid = Auth.getUID();
             await FirebaseDB.collection('users').doc(uid).collection('data').doc(key).set({
@@ -50,7 +53,7 @@ const Data = {
     },
 
     async _cloudGet(key) {
-        if (!Auth || !Auth.isSignedIn()) return null;
+        if (typeof Auth === 'undefined' || !Auth.isSignedIn()) return null;
         try {
             const uid = Auth.getUID();
             const doc = await FirebaseDB.collection('users').doc(uid).collection('data').doc(key).get();
@@ -64,7 +67,7 @@ const Data = {
     },
 
     async _cloudDelete(key) {
-        if (!Auth || !Auth.isSignedIn()) return;
+        if (typeof Auth === 'undefined' || !Auth.isSignedIn()) return;
         try {
             const uid = Auth.getUID();
             await FirebaseDB.collection('users').doc(uid).collection('data').doc(key).delete();
@@ -75,14 +78,16 @@ const Data = {
 
     // Load all data from Firestore → localStorage
     async loadFromCloud() {
-        if (!Auth || !Auth.isSignedIn()) return;
+        if (typeof Auth === 'undefined' || !Auth.isSignedIn()) return;
+        this._isSyncing = true;
         try {
             const uid = Auth.getUID();
             const snapshot = await FirebaseDB.collection('users').doc(uid).collection('data').get();
 
             if (snapshot.empty) {
                 // No cloud data — push local data to cloud (first-time sync)
-                Toast.show('First sync — uploading local data to cloud...', 'info');
+                this._isSyncing = false;
+                Toast.show('First sync — uploading local data...', 'info');
                 await this.syncToCloud();
                 return;
             }
@@ -100,15 +105,18 @@ const Data = {
         } catch (err) {
             console.error('Cloud load failed:', err);
             Toast.show('Cloud sync failed — using local data', 'warning');
+        } finally {
+            this._isSyncing = false;
         }
     },
 
     // Push all local data → Firestore
     async syncToCloud() {
-        if (!Auth || !Auth.isSignedIn()) return;
+        if (typeof Auth === 'undefined' || !Auth.isSignedIn()) return;
         try {
             const uid = Auth.getUID();
             const batch = FirebaseDB.batch();
+            let count = 0;
 
             this._cloudKeys.forEach(key => {
                 const value = this.get(key);
@@ -118,11 +126,16 @@ const Data = {
                         value: JSON.stringify(value),
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                    count++;
                 }
             });
 
-            await batch.commit();
-            Toast.show('All data synced to cloud ☁', 'success');
+            if (count > 0) {
+                await batch.commit();
+                Toast.show(`Synced ${count} items to cloud ☁`, 'success');
+            } else {
+                Toast.show('No data to sync', 'info');
+            }
         } catch (err) {
             console.error('Cloud sync failed:', err);
             Toast.show('Sync failed: ' + err.message, 'error');
@@ -185,6 +198,9 @@ const Data = {
     // --- Initialize Defaults ---
     initDefaults() {
         if (this.get('initialized')) return;
+
+        // Block cloud sync during defaults initialization
+        this._isSyncing = true;
 
         // Default phases
         this.set('phases', [
@@ -275,6 +291,9 @@ const Data = {
         this.saveSettings(this.getSettings());
 
         this.set('initialized', true);
+
+        // Re-enable cloud sync
+        this._isSyncing = false;
     },
 
     // --- Export ---
